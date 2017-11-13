@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Microconainers</title>
+
+    <meta name="description" content="Why and how to build microcontainers">
+    <meta name="author" content="Owen Cliffe">
+
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="counter.css">
+
+    <link rel="stylesheet" href="css/theme/oracle.css" id="theme">
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+    <script src="js/jquery-2.2.0.min.js"></script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h2>Microcontainers</h2>
+            <small>Three tools to help you run smaller, more secure and more reliable containers</small>
+            <p>Owen Cliffe, 2017</p>
+        </section>
+        <section>
+            <h2>Thanks to ....<sup>*</sup></h2>
+            <ul>
+                <li>Vish (Ishaya) Abrams @vish</li>
+                <li>TJ Fontaine @tjfontaine</li>
+                <li>Others!</li>
+            </ul>
+            <p>
+                <small><sup>*</sup>they invented and built this - I'm just talking about it (they also helped me with
+                    that)
+                </small>
+
+            </p>
+        </section>
+        <section>
+            <img src="docker.png"/>
+            <sup>*</sup>
+            <small><sup>*</sup>A picture of something you probably recognise to lend credibility to my talk</small>
+        </section>
+
+        <section>
+            <h2> Show of hands <sup>*</sup></h2>
+            <ul>
+                <li class="fragment">Used docker in production</li>
+                <li class="fragment">Seen a >1Gb docker image?</li>
+
+                <li class="fragment">Spent any time making images smaller</li>
+                <li class="fragment">Used docker exec on a running container?</li>
+                <li class="fragment">Audited images for security</li>
+                <li class="fragment">Hit ctrl+c on docker run and nothing happened</li>
+            </ul>
+            <small><sup>*</sup>a contrived exercise by which I try to engage you in the talk</small>
+        </section>
+        <section>
+            <div>(Remember to say that docker is great)</div>
+        </section>
+        <section>
+            <img width="800" src="static_linked_binaries.png">
+        </section>
+        <section>
+            <img src="occs_logo.jpg" width="500px"/>
+        </section>
+        <section>
+            <img width="800" src="padlock.jpeg">
+        </section>
+
+        <section>
+            <img width="800" src="fail.jpeg">
+        </section>
+
+        <section>
+            <img width="800" src="dollarbill.jpeg">
+        </section>
+
+        <section>
+            <div>(Remember to say that docker is great)</div>
+        </section>
+
+
+        <section>
+            <img src="question_marks.jpg">
+        </section>
+
+        <section>
+            <img src="model_t_factory.jpg">
+        </section>
+
+        <section>
+            <img width="800" src="1996.jpeg">
+        </section>
+
+        <section>
+            <img class="fragment" width="800" src="cve-2016-9962.png">
+            <img class="fragment" width="800" src="Screen%20Shot%202017-10-11%20at%2016.13.18.png">
+            <img class="fragment" width="800" src="Screen%20Shot%202017-10-11%20at%2016.13.29.png">
+        </section>
+
+        <section>
+            <img width="800" src="IBM_0665-30_HDD_1.jpg">
+        </section>
+        <section>
+            <img width="800" src="cake.jpg">
+        </section>
+
+
+        <section>
+            <h2>Are Layers an anti-pattern?</h2>
+            <ul>
+                <li class="fragment">Necessary to make docker work in the first place</li>
+                <li class="fragment">Non-deterministic storage requirements</li>
+                <li class="fragment">Complex to move around</li>
+                <li class="fragment">(docker system prune?)</li>
+                <li class="fragment">Leaky abstraction</li>
+                <li class="fragment">OverlayFS/AUFS/LVM : overhead & risk</li>
+            </ul>
+        </section>
+
+        <section>
+            <div>(Remember to say that docker is great again)</div>
+        </section>
+
+        <section>
+            <h1> Microcontainers</h1>
+            <image src="microcontainers.png"/>
+        </section>
+
+        <section>
+            <h1> A Manifesto <sup>*</sup></h1>
+            <ul>
+                <li class="fragment">contains only a single executable and its dependencies (this means no shell and no
+                    init process)
+                </li>
+                <li class="fragment">runs with a read-only root filesystem (writes are isolated and handled via volume
+                    mounts)
+                </li>
+                <li class="fragment">has no user and group filesystem ownership (everything is owned and readable by a
+                    single user)
+                </li>
+                <li class="fragment">has no filesystem timestamps or capabilities</li>
+                <li class="fragment">can be built reproducibly and produces the same image each time</li>
+            </ul>
+            <small><sup>*</sup>Bold talk that tries to associate what is effectively just something you do in your job
+                with much more important things like politics.
+            </small>
+
+        </section>
+
+
+        <section>
+            <h1> 2 &frac12; Tools</h1>
+            <ul class="fragment">
+                <li> Smith<br/>
+                    <small>https://github.com/oracle/smith</small>
+                </li>
+                <li> CrashCart<br/>
+                    <small>https://github.com/oracle/crashcart</small>
+                </li>
+                <li>( RailCar ) <br/>
+                    <small>https://github.com/oracle/railcar</small>
+                </li>
+
+            </ul>
+        </section>
+
+        <section>
+            <h1>Smith</h1>
+            <ul>
+                <li class="fragment">Helps you build OCI images</li>
+                <li class="fragment">From other docker images (or rpms)</li>
+                <li class="fragment">(potentially)
+                    <small>teeeny</small>
+                    images
+                </li>
+                <li class="fragment">Maintains repeatability</li>
+                <li class="fragment">Supports secure FS contract</li>
+                <li class="fragment">Single user, no root</li>
+
+            </ul>
+        </section>
+
+
+        <section>
+            <blink><h2> DEMO!!!</h2></blink>
+        </section>
+
+        <section>
+            <h1>Smith</h1>
+            <ul>
+                <li>Helps you build small images (user guided)</li>
+                <li>Maintains image repeatability (no atts, no timestamps)</li>
+                <li>Helps make your RootFS RO & separate state, &amp; config</li>
+                <li>Can work off existing docker images, or rpms</li>
+            </ul>
+        </section>
+
+        <section>
+            <h1> But... Diagnosability</h1>
+            <img height="400" src="stethoscope.png"/>
+            <sup>*</sup>
+            <br/>
+            <small><sup>*</sup>I literally googled "Stethoscope Wikipedia"</small>
+        </section>
+
+        <section>
+            <h1>CrashCart</h1>
+            <ul>
+                <li> Diagnose issues in production containers</li>
+                <li class="fragment"> Live diagnosis is sometimes a thing</li>
+                <li class="fragment"> Supports automation</li>
+                <li class="fragment"> Honours microcontainer contract</li>
+            </ul>
+        </section>
+
+        <section>
+            <h1>CrashCart</h1>
+            <ul>
+                <li class="fragment"> Toolkit image - whatever you want
+                    <ul>
+                        <li> uses Nix build to prefix tools (where needed)</li>
+                        <li> many tools can just be dropped in (e.g. jdb)</li>
+                    </ul>
+                </li>
+                <li class="fragment"> CLI
+                    <ul>
+                        <li> sets up mounts</li>
+                        <li> shells into container</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+
+        <section>
+            <h1>mount crashcart</h1>
+            <ul>
+                <li class="fragment">I think you just told me that / was read only</li>
+                <li class="fragment">Mounts in a relocated directory (/dev/crashcart)
+                    <pre>tmpfs on /dev type tmpfs (rw,nosuid,size=65536k,mode=755)</pre>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h1>demo?</h1>
+
+        </section>
+        <section>
+            <h1> RailCar</h1>
+            <img src="railcar.png">
+        </section>
+        <section>
+            <img src="logo_oci.png">
+        </section>
+        <section>
+            <h1>RailCar</h1>
+            <ul>
+                <li> RunC</li>
+                <ul>
+                    <li> Pretty cool but....</li>
+                    <li class="fragment"> Right at the bottom of the stack - hard to diagnose</li>
+                    <li class="fragment"> go is not quite right - namespaces inherit from threads</li>
+                    <li class="fragment"> PID 1 , Ctrl-C & Zombies</li>
+                    <li class="fragment"> OCI spec?</li>
+                </ul>
+            </ul>
+        </section>
+
+
+        <section>
+            <h1>RailCar</h1>
+            <ul>
+                <li class="fragment"> Clean room runc replacement, based on OCI spec</li>
+                <li class="fragment"> Written in <img height="60px" src="rust-logo.png"></li>
+                <li class="fragment"> does init + signal handling (like rkt + systemd)</li>
+                <li class="fragment"> Small, fast & safe</li>
+                <li class="fragment"> experimental!! - for experiments</li>
+                <li class="fragment"> implements much of the runtime contract - but not all</li>
+            </ul>
+        </section>
+
+        <section>
+            <h1>demo?</h1>
+        </section>
+
+
+        <section>
+            <h3> Summary</h3>
+            <img class="fragment" src="docker.png"/>
+        </section>
+        <section>
+            <h3> Summary</h3>
+            <div><img style="width:30%" class="fragment" src="rainbow.jpg"> <img style="width:30%" class="fragment"
+                                                                                 src="unicorn.png"></div>
+        </section>
+        <section>
+            <h1> Summary</h1>
+            <image src="microcontainers.png"/>
+        </section>
+
+        <section>
+            <h1> Summary</h1>
+            <ul>
+                <li>https://github.com/oracle/smith</li>
+                <li>https://github.com/oracle/crashcart</li>
+                <li>https://github.com/oracle/railcar</li>
+                <li>https://blogs.oracle.com/developers/three-new-open-source-container-utilities</li>
+
+            </ul>
+        </section>
+
+        <section>
+            <h1>Thanks</h1>
+            <div>@zootalures (me)</div>
+
+        </section>
+    </div>
+</div>
+
+<script src="js/reveal.js"></script>
+
+<script>
+
+    // Full list of configuration options available at:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        transition: 'convex', // none/fade/slide/convex/concave/zoom
+
+        // Optional reveal.js plugins
+        dependencies: [
+            {
+                src: 'lib/js/classList.js', condition: function () {
+                return !document.body.classList;
+            }
+            }
+
+        ]
+    });
+</script>
+</body>
+</html>
